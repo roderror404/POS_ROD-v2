@@ -53,7 +53,7 @@ Storage keys used across system:
 function initDefaults(){
   if(!localStorage.getItem('users')){
     localStorage.setItem('users', JSON.stringify([
-      { username: 'jhonrod', password: 'admin', role: 'jhonrod' }
+      { username: 'jhonrod', password: 'admin', role: 'admin' }
     ]));
   }
   if(!localStorage.getItem('inventory')){
@@ -107,3 +107,4 @@ qs('regBtn').addEventListener('click', ()=>{
 </script>
 </body>
 </html>
+
