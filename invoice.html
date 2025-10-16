@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Create Invoice</title>
+<style>
+:root{--brand:#024379}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8}
+header{background:var(--brand);color:#fff;padding:14px;text-align:center}
+.container{max-width:900px;margin:20px auto;padding:16px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.05)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.input{flex:1;padding:8px;border-radius:8px;border:1px solid #ddd}
+.btn{background:var(--brand);color:#fff;border:0;padding:10px 12px;border-radius:8px;cursor:pointer}
+.table{margin-top:12px}
+.table table{width:100%;border-collapse:collapse}
+.table th{background:#f3f6fb;padding:10px;text-align:left}
+.table td{padding:8px;border-bottom:1px solid #eee}
+.return{position:fixed;left:16px;top:14px;background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+.printBtn{background:#28a745}
+</style>
+</head>
+<body>
+<header>Create Invoice</header>
+<button class="return" onclick="location.href='index.html'">← Home</button>
+<div class="container">
+  <div class="row">
+    <input id="invNo" class="input" placeholder="Invoice #" />
+    <input id="invDate" class="input" type="date" />
+    <input id="invCustomer" class="input" placeholder="Customer" />
+  </div>
+
+  <div style="margin-top:12px" class="row">
+    <select id="productSelect" class="input"></select>
+    <input id="pqty" class="input" type="number" min="1" value="1" />
+    <button class="btn" id="addFromInv">Add</button>
+  </div>
+
+  <div style="margin-top:12px">
+    <div class="table">
+      <table>
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr></thead>
+        <tbody id="itemsBody"></tbody>
+        <tfoot><tr><td colspan="3" style="text-align:right;padding:10px">Total:</td><td id="grand">₱0.00</td><td></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-top:12px">
+    <button class="btn printBtn" id="toPrint">Print (Thermal)</button>
+    <button class="btn" onclick="location.href='dashboard.html'">Back</button>
+  </div>
+</div>
+
+<script>
+const session = JSON.parse(localStorage.getItem('loggedInUser')||'null');
+if(!session) location.href='login.html';
+
+const INV_KEY = 'inventory';
+const RECORDS_KEY = 'records';
+const LATEST_KEY = 'latestInvoice';
+const COUNTER_KEY = 'invoiceCounter';
+
+let cart = [];
+let inventory = JSON.parse(localStorage.getItem(INV_KEY)||'[]');
+
+function populateProducts(){
+  const sel=document.getElementById('productSelect');
+  sel.innerHTML = '<option value="">-- Select product --</option>';
+  inventory.forEach((p,i)=> sel.insertAdjacentHTML('beforeend',`<option value="${i}">${p.name} — ₱${(p.price||0).toFixed(2)} (stock:${p.stock||0})</option>`));
+}
+populateProducts();
+
+// init invoice number & date
+(function(){
+  const counter = parseInt(localStorage.getItem(COUNTER_KEY)||'1001',10);
+  document.getElementById('invNo').value = 'INV-' + counter;
+  document.getElementById('invDate').valueAsDate = new Date();
+})();
+
+document.getElementById('addFromInv').addEventListener('click', ()=>{
+  const idx = document.getElementById('productSelect').value;
+  const q = parseInt(document.getElementById('pqty').value)||1;
+  if(idx === '') { alert('Choose product'); return; }
+  const p = inventory[idx];
+  if((p.stock||0) < q){
+    if(!confirm(`Stock low for ${p.name} (stock:${p.stock||0}). Add anyway?`)) return;
+  }
+  cart.push({ name: p.name, qty: q, price: p.price });
+  renderCart();
+});
+
+function renderCart(){
+  const tbody=document.getElementById('itemsBody'); tbody.innerHTML='';
+  let total=0;
+  cart.forEach((it,i)=>{
+    const t = (it.qty * (it.price||0));
+    total += t;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${it.name}</td><td>${it.qty}</td><td>₱${(it.price||0).toFixed(2)}</td><td>₱${t.toFixed(2)}</td>
+      <td><button onclick="remove(${i})">Delete</button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('grand').textContent = '₱'+total.toFixed(2);
+}
+
+function remove(i){ cart.splice(i,1); renderCart(); }
+
+document.getElementById('toPrint').addEventListener('click', ()=>{
+  if(cart.length === 0){ alert('Add items to invoice'); return; }
+
+  // auto-increment
+  let counter = parseInt(localStorage.getItem(COUNTER_KEY)||'1001',10);
+  const invoiceNumber = 'INV-' + counter;
+  localStorage.setItem(COUNTER_KEY, (counter + 1).toString());
+
+  const invoice = {
+    number: invoiceNumber,
+    date: document.getElementById('invDate').value || new Date().toISOString().split('T')[0],
+    customer: document.getElementById('invCustomer').value || 'Walk-in',
+    items: cart,
+    total: cart.reduce((s,it)=>s + (it.qty * (it.price||0)), 0).toFixed(2)
+  };
+
+  // decrement stock
+  cart.forEach(sold => {
+    const idx = inventory.findIndex(i => i.name === sold.name);
+    if(idx !== -1){
+      inventory[idx].stock = Math.max(0, (inventory[idx].stock || 0) - (sold.qty || 0));
+    }
+  });
+  localStorage.setItem(INV_KEY, JSON.stringify(inventory));
+
+  // save latest & append records
+  localStorage.setItem(LATEST_KEY, JSON.stringify(invoice));
+  const rec = JSON.parse(localStorage.getItem(RECORDS_KEY)||'[]');
+  rec.push(invoice);
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(rec));
+
+  // refresh products (stock updated)
+  populateProducts();
+
+  // open print page
+  window.open('print.html', '_blank');
+
+  // reset cart
+  cart = [];
+  renderCart();
+});
+</script>
+</body>
+</html>

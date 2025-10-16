@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Print Receipt</title>
+<style>
+html,body{height:100%;margin:0;background:#f4f4f4;display:flex;align-items:flex-start;justify-content:center;font-family:Courier New,monospace}
+.receipt{width:58mm;background:#fff;margin-top:8px;padding:8px;border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+header{text-align:center;border-bottom:1px dashed #000;padding-bottom:6px}
+header h2{margin:0;font-size:14px}
+.info p{margin:4px 0;font-size:12px}
+table{width:100%;font-size:12px;border-collapse:collapse;margin-top:6px}
+th,td{padding:2px 0;text-align:left}
+th{border-bottom:1px dashed #000}
+tfoot td{border-top:1px dashed #000;font-weight:700;padding-top:6px}
+.paid{text-align:center;font-weight:700;margin-top:8px}
+footer{text-align:center;margin-top:6px;font-size:11px;color:#444}
+@media print{ @page{size:58mm auto;margin:0} body{background:none} .receipt{box-shadow:none;margin:0;padding:0;border-radius:0} button{display:none} }
+button{display:block;margin:10px auto;padding:8px 12px;border-radius:6px;border:0;background:#0078d7;color:#fff}
+</style>
+</head>
+<body>
+<div class="receipt" id="receipt">
+  <header><h2>Rod Dulfo POS System</h2><small>123 Main St, Manila</small></header>
+  <div class="info"><p><strong>Invoice #:</strong> <span id="num"></span></p><p><strong>Date:</strong> <span id="date"></span></p><p><strong>Customer:</strong> <span id="cust"></span></p></div>
+  <table id="tbl"><thead><tr><th>Item</th><th>Q</th><th>Price</th><th>Total</th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3">Total</td><td id="total">₱0.00</td></tr></tfoot></table>
+  <div class="paid">PAID</div>
+  <footer><div>Thank you for your purchase!</div><div>© 2025 Rod Dulfo</div></footer>
+</div>
+<button onclick="window.print()">🖨 Print again</button>
+<script>
+(function(){
+  const d = JSON.parse(localStorage.getItem('latestInvoice') || 'null');
+  if(!d){ document.body.innerHTML = '<p style="text-align:center;margin:40px">No invoice found</p>'; return; }
+  document.getElementById('num').textContent = d.number;
+  document.getElementById('date').textContent = d.date;
+  document.getElementById('cust').textContent = d.customer;
+  const tbody = document.querySelector('#tbl tbody'); let tot = 0;
+  d.items.forEach(it=>{
+    const line = (it.qty * (it.price||0));
+    tot += line;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${it.name}</td><td>${it.qty}</td><td>₱${(it.price||0).toFixed(2)}</td><td>₱${line.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('total').textContent = '₱' + parseFloat(d.total).toFixed(2);
+  setTimeout(()=>window.print(), 500);
+})();
+</script>
+</body>
+</html>

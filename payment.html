@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payment Tracker | POS System</title>
+<style>
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f5f6fa;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+h2 { text-align: center; color: #333; }
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover { background: #0056b3; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+th { background: #007bff; color: white; }
+.total {
+  text-align: right;
+  margin-top: 10px;
+  font-weight: bold;
+}
+.back {
+  background: #28a745;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>💵 Payment Tracker</h2>
+  <select id="type">
+    <option value="in">Cash In</option>
+    <option value="out">Cash Out</option>
+  </select>
+  <input id="amount" type="number" placeholder="Amount">
+  <input id="desc" placeholder="Description">
+  <button onclick="addPayment()">Add Transaction</button>
+  <button class="back" onclick="window.location='dashboard.html'">🏠 Back to Dashboard</button>
+
+  <table id="paymentTable">
+    <thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th><th>Action</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div class="total" id="totals"></div>
+</div>
+
+<script>
+if (!localStorage.getItem('loggedInUser')) location.href='index.html';
+
+function getPayments() { return JSON.parse(localStorage.getItem('payments') || '[]'); }
+function savePayments(p) { localStorage.setItem('payments', JSON.stringify(p)); }
+
+function addPayment() {
+  const type = document.getElementById('type').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+  const desc = document.getElementById('desc').value;
+  if (!amount || amount <= 0) return alert('Enter amount.');
+  const p = getPayments();
+  p.push({ type, amount, desc, date:new Date().toLocaleString() });
+  savePayments(p);
+  render();
+  document.getElementById('amount').value = '';
+  document.getElementById('desc').value = '';
+}
+
+function delPayment(i) {
+  const p = getPayments();
+  p.splice(i, 1);
+  savePayments(p);
+  render();
+}
+
+function render() {
+  const p = getPayments();
+  const tbody = document.querySelector('#paymentTable tbody');
+  tbody.innerHTML = '';
+  let inSum=0, outSum=0;
+  p.forEach((v,i)=>{
+    if(v.type==='in') inSum+=v.amount; else outSum+=v.amount;
+    tbody.innerHTML += `<tr>
+      <td>${v.type==='in'?'In 💰':'Out 💸'}</td>
+      <td>₱${v.amount.toFixed(2)}</td>
+      <td>${v.desc}</td>
+      <td>${v.date}</td>
+      <td><button onclick="delPayment(${i})">🗑️</button></td>
+    </tr>`;
+  });
+  document.getElementById('totals').textContent = 
+    `Cash In: ₱${inSum.toFixed(2)} | Cash Out: ₱${outSum.toFixed(2)} | Balance: ₱${(inSum-outSum).toFixed(2)}`;
+}
+render();
+</script>
+</body>
+</html>

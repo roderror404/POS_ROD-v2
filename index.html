@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>POS Home</title>
+<style>
+:root{--brand:#024379}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#e6f0fb,#f4f7fb);min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--brand);color:#fff;padding:18px;text-align:center;font-size:20px;box-shadow:0 3px 12px rgba(0,0,0,0.08)}
+.container{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+.grid{width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.06);cursor:pointer;transition:transform .15s}
+.card:hover{transform:translateY(-6px)}
+.card h3{margin:10px 0;color:var(--brand)}
+.logout{position:fixed;right:16px;top:14px;background:#ff3b30;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+.footer{text-align:center;padding:14px;color:#666;font-size:13px}
+.user{position:fixed;left:16px;top:14px;color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+<header>Rod Dulfo POS System</header>
+<button class="logout" onclick="logout()">Logout</button>
+<div class="user" id="userLabel"></div>
+<div class="container">
+  <div class="grid">
+    <div class="card" onclick="go('dashboard.html')"><h3>🧾 Dashboard</h3><div>Overview & shortcuts</div></div>
+    <div class="card" onclick="go('invoice.html')"><h3>➕ New Invoice</h3><div>Create and print invoices</div></div>
+    <div class="card" onclick="go('inventory.html')"><h3>📦 Inventory</h3><div>Manage products & stock</div></div>
+    <div class="card" onclick="go('records.html')"><h3>📘 Records</h3><div>Invoice history & reprint</div></div>
+    <div class="card" onclick="go('payment.html')"><h3>💵 Payment</h3><div>Cash in/out transactions</div></div>
+  </div>
+</div>
+<div class="footer">© 2025 Rod Dulfo — Local POS</div>
+
+<script>
+const session = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+if(!session){ location.href='login.html'; }
+document.getElementById('userLabel').textContent = session.username + (session.role === 'admin' ? ' (admin)' : '');
+function logout(){ localStorage.removeItem('loggedInUser'); location.href='login.html'; }
+function go(p){ location.href = p; }
+</script>
+</body>
+</html>

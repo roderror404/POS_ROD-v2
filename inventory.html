@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Inventory</title>
+<style>
+:root{--brand:#024379}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8}
+header{background:var(--brand);color:#fff;padding:14px;text-align:center}
+.container{max-width:900px;margin:18px auto;padding:16px}
+.form{display:flex;gap:8px;flex-wrap:wrap}
+.form input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
+.addBtn{background:var(--brand);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+.table{margin-top:14px;background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.05)}
+.table table{width:100%;border-collapse:collapse}
+.table th{background:#f3f6fb;padding:10px;text-align:left}
+.table td{padding:10px;border-bottom:1px solid #eee}
+.action{padding:6px 10px;border-radius:6px;border:0;cursor:pointer}
+.edit{background:#28a745;color:#fff}
+.del{background:#dc3545;color:#fff}
+.return{position:fixed;left:16px;top:14px;background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+.search{margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid #ddd;width:100%}
+</style>
+</head>
+<body>
+<header>Inventory Manager</header>
+<button class="return" onclick="location.href='index.html'">← Home</button>
+<div class="container">
+  <input id="search" class="search" placeholder="Search item name..." oninput="render()"/>
+  <div class="form">
+    <input id="iname" placeholder="Item name"/>
+    <input id="istock" type="number" placeholder="Stock" min="0"/>
+    <input id="iprice" type="number" placeholder="Price" step="0.01" min="0"/>
+    <button class="addBtn" id="addBtn">Add</button>
+  </div>
+
+  <div class="table">
+    <table>
+      <thead><tr><th>Item</th><th>Stock</th><th>Price</th><th>Value</th><th>Action</th></tr></thead>
+      <tbody id="invBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const session = JSON.parse(localStorage.getItem('loggedInUser')||'null');
+if(!session) location.href='login.html';
+
+const KEY='inventory';
+let items = JSON.parse(localStorage.getItem(KEY)||'[]');
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(items)); }
+
+function render(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const tbody=document.getElementById('invBody'); tbody.innerHTML='';
+  items.filter(it => !q || it.name.toLowerCase().includes(q)).forEach((it,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${it.name}</td><td>${it.stock}</td><td>₱${(it.price||0).toFixed(2)}</td><td>₱${((it.stock||0)* (it.price||0)).toFixed(2)}</td>
+      <td>
+        <button class="action edit" onclick="editItem(${i})">Edit</button>
+        <button class="action del" onclick="delItem(${i})">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const n=document.getElementById('iname').value.trim();
+  const s=parseInt(document.getElementById('istock').value) || 0;
+  const p=parseFloat(document.getElementById('iprice').value) || 0;
+  if(!n || p<=0){ alert('Enter item name and valid price'); return; }
+  items.push({ name: n, stock: s, price: p });
+  document.getElementById('iname').value=''; document.getElementById('istock').value=''; document.getElementById('iprice').value='';
+  save(); render();
+});
+
+function delItem(i){ if(confirm('Delete item?')){ items.splice(i,1); save(); render(); } }
+function editItem(i){
+  const it = items[i];
+  const nn = prompt('Name', it.name);
+  const ns = prompt('Stock', it.stock);
+  const np = prompt('Price', it.price);
+  if(nn!==null && ns!==null && np!==null){
+    items[i] = { name: nn, stock: parseInt(ns)||0, price: parseFloat(np)||0 };
+    save(); render();
+  }
+}
+render();
+</script>
+</body>
+</html>

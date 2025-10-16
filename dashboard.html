@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard</title>
+<style>
+:root{--brand:#024379;--low:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8}
+header{background:var(--brand);color:#fff;padding:18px;text-align:center;font-size:20px;position:relative}
+.container{max-width:1000px;margin:20px auto;padding:18px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.06);text-align:center}
+.card h3{margin:8px 0;color:var(--brand)}
+.low-badge{position:absolute;right:18px;top:14px;background:var(--low);color:#fff;padding:6px 10px;border-radius:999px;font-weight:700;display:none}
+.table{margin-top:18px;background:#fff;padding:14px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.06)}
+.btn{padding:10px 14px;border-radius:8px;border:0;background:var(--brand);color:#fff;cursor:pointer;margin-right:8px}
+.return{position:fixed;left:16px;top:14px;background:#6c757d;color:#fff;padding:8px 12px;border-radius:8px;border:0}
+.low-table th{background:#ffefef}
+</style>
+</head>
+<body>
+<header>Sales Dashboard <span id="lowBadge" class="low-badge"></span></header>
+<button class="return" onclick="location.href='index.html'">← Home</button>
+<div class="container">
+  <div id="lastLogin" style="text-align:center;color:#666;margin-bottom:10px"></div>
+
+  <div id="summary" class="summary"></div>
+
+  <div class="table">
+    <h3>Recent Invoices</h3>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:hsl(217, 86%, 80%)"><th>Invoice</th><th>Date</th><th>Customer</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody id="recentRows"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:16px" id="lowSection"></div>
+
+  <div style="margin-top:12px">
+    <button class="btn" onclick="location.href='invoice.html'">Create Invoice</button>
+    <button class="btn" onclick="location.href='records.html'">Open Records</button>
+    <button class="btn" onclick="location.href='inventory.html'">Inventory</button>
+    <button class="btn" id="adminBtn" style="display:none;background:#6f42c1" onclick="location.href='admin.html'">Manage Accounts</button>
+  </div>
+</div>
+
+<script>
+const LOW_THRESHOLD = 5; // default low stock
+
+const session = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+if(!session) location.href='login.html';
+document.getElementById('lastLogin').textContent = `Logged in as: ${session.username} | Last login: ${new Date(session.lastLogin).toLocaleString()}`;
+
+if(session.role === 'admin') document.getElementById('adminBtn').style.display = 'inline-block';
+
+function getInventory(){ return JSON.parse(localStorage.getItem('inventory')||'[]'); }
+function getRecords(){ return JSON.parse(localStorage.getItem('records')||'[]'); }
+function getUsers(){ return JSON.parse(localStorage.getItem('users')||'[]'); }
+
+function render(){
+  const inventory = getInventory();
+  const records = getRecords();
+  const users = getUsers();
+
+  // Summary cards
+  const lowItems = inventory.filter(i => (i.stock||0) <= LOW_THRESHOLD);
+  const summaryHTML = `
+    <div class="card"><h3>Total Products</h3><div><b>${inventory.length}</b></div></div>
+    <div class="card"><h3>Total Invoices</h3><div><b>${records.length}</b></div></div>
+    <div class="card"><h3>Low Stock</h3><div><b>${lowItems.length}</b></div></div>
+    ${session.role === 'admin' ? `<div class="card"><h3>Registered Users</h3><div><b>${users.length}</b></div></div>` : ''}
+  `;
+  document.getElementById('summary').innerHTML = summaryHTML;
+
+  // recent
+  const recent = records.slice(-6).reverse();
+  const tbody = document.getElementById('recentRows'); tbody.innerHTML = '';
+  recent.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.number}</td><td>${r.date}</td><td>${r.customer}</td><td style="text-align:right">₱${parseFloat(r.total).toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // low stock section
+  const lowSection = document.getElementById('lowSection');
+  if(lowItems.length){
+    document.getElementById('lowBadge').style.display = 'inline-block';
+    document.getElementById('lowBadge').textContent = `${lowItems.length} LOW`;
+    let html = `<h3>Low Stock Alerts (≤ ${LOW_THRESHOLD})</h3><table style="width:100%;border-collapse:collapse"><thead><tr><th>Item</th><th>Stock</th><th>Action</th></tr></thead><tbody>`;
+    lowItems.forEach(it => {
+      html += `<tr><td>${it.name}</td><td>${it.stock}</td><td><button onclick="location.href='inventory.html'">Manage</button></td></tr>`;
+    });
+    html += `</tbody></table>`;
+    lowSection.innerHTML = html;
+  } else {
+    document.getElementById('lowBadge').style.display = 'none';
+    lowSection.innerHTML = `<h3>Low Stock Alerts (≤ ${LOW_THRESHOLD})</h3><p style="color:#666">No low stock items.</p>`;
+  }
+}
+
+render();
+</script>
+</body>
+</html>

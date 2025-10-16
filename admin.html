@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin - Manage Accounts</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f5f6fa;margin:0}
+.container{max-width:900px;margin:40px auto;background:#fff;padding:22px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+h1{text-align:center}
+form{display:flex;gap:8px;flex-wrap:wrap}
+input{padding:8px;border-radius:8px;border:1px solid #ddd;flex:1}
+.add-btn{background:#28a745;color:#fff;padding:8px 12px;border:0;border-radius:8px}
+.table{margin-top:16px}
+.table table{width:100%;border-collapse:collapse}
+.table th{background:#024379;color:#fff;padding:10px;text-align:left}
+.table td{padding:10px;border-bottom:1px solid #eee}
+.btn-reset{background:#ffc107;border:0;padding:6px 8px;border-radius:6px}
+.btn-del{background:#dc3545;border:0;padding:6px 8px;border-radius:6px;color:#fff}
+.return{position:fixed;left:16px;top:14px;background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px}
+</style>
+</head>
+<body>
+<button class="return" onclick="location.href='dashboard.html'">← Home</button>
+<div class="container">
+  <h1>Admin - Manage Accounts</h1>
+  <form onsubmit="addUser(event)">
+    <input id="newUser" placeholder="Username" required />
+    <input id="newPass" placeholder="Password" required />
+    <button class="add-btn" type="submit">Add User</button>
+  </form>
+
+  <div id="msg" style="text-align:center;color:green;margin-top:8px"></div>
+
+  <div class="table">
+    <table>
+      <thead><tr><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const current = JSON.parse(localStorage.getItem('loggedInUser')||'{}');
+if(!current.username || current.role !== 'admin'){ alert('Access denied'); window.location.href='dashboard.html'; }
+
+function loadUsers(){
+  const users = JSON.parse(localStorage.getItem('users')||'[]');
+  const tbody = document.getElementById('usersBody'); tbody.innerHTML = '';
+  users.forEach((u,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${u.username}</td><td>${u.role||'user'}</td>
+      <td>
+        ${u.username !== 'jhonrod' ? `<button class="btn-reset" onclick="resetPass('${u.username}')">Reset</button>
+        <button class="btn-del" onclick="delUser('${u.username}')">Delete</button>` : '<em>Protected</em>'}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addUser(e){
+  e.preventDefault();
+  const username = document.getElementById('newUser').value.trim();
+  const password = document.getElementById('newPass').value.trim();
+  if(!username||!password) return;
+  let users = JSON.parse(localStorage.getItem('users')||'[]');
+  if(users.find(x=>x.username===username)){ showMsg('Username exists'); return; }
+  users.push({username, password, role:'user'});
+  localStorage.setItem('users', JSON.stringify(users));
+  showMsg('User added');
+  document.getElementById('newUser').value=''; document.getElementById('newPass').value='';
+  loadUsers();
+}
+
+function resetPass(username){
+  const newP = prompt(`New password for ${username}:`);
+  if(!newP) return;
+  let users = JSON.parse(localStorage.getItem('users')||'[]');
+  users = users.map(u => u.username === username ? {...u, password: newP} : u);
+  localStorage.setItem('users', JSON.stringify(users));
+  showMsg('Password updated');
+  loadUsers();
+}
+
+function delUser(username){
+  if(!confirm('Delete user?')) return;
+  let users = JSON.parse(localStorage.getItem('users')||'[]');
+  users = users.filter(u => u.username !== username);
+  localStorage.setItem('users', JSON.stringify(users));
+  showMsg('User deleted');
+  loadUsers();
+}
+
+function showMsg(m){ const el = document.getElementById('msg'); el.textContent = m; setTimeout(()=>el.textContent='','3000'); }
+loadUsers();
+</script>
+</body>
+</html>
