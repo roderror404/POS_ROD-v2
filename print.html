@@ -21,13 +21,13 @@ button{display:block;margin:10px auto;padding:8px 12px;border-radius:6px;border:
 </head>
 <body>
 <div class="receipt" id="receipt">
-  <header><h2>Rod Dulfo POS System</h2><small>Pusok Lapu-Lapu City, Cebu</small></header>
+  <header><h2>Raitech IT</h2><small>Pusok Lapu-Lapu City, Cebu</small></header>
   <div class="info"><p><strong>Invoice #:</strong> <span id="num"></span></p><p><strong>Date:</strong> <span id="date"></span></p><p><strong>Customer:</strong> <span id="cust"></span></p></div>
   <table id="tbl"><thead><tr><th>Item</th><th>Q</th><th>Price</th><th>Total</th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3">Total</td><td id="total">₱0.00</td></tr></tfoot></table>
   <div class="paid">PAID</div>
-  <footer><div>Thank you for your purchase!</div><div>© 2025 Rod Dulfo</div></footer>
+  <footer><div>Thank you for your purchase!</div><div>© 2025 Raitech IT</div></footer>
 </div>
-<button onclick="window.print()">🖨 Print again</button>
+<button onclick="window.print()">Print again</button>
 <script>
 (function(){
   const d = JSON.parse(localStorage.getItem('latestInvoice') || 'null');
@@ -49,4 +49,5 @@ button{display:block;margin:10px auto;padding:8px 12px;border-radius:6px;border:
 </script>
 </body>
 </html>
+
 
