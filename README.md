@@ -58,7 +58,7 @@ Environment: 100% Offline (Local)
 
 Clone the Repository
 
-git clone https://github.com/your-username/your-pos-system.git
+git clone https://roderror404.github.io/POS_ROD-v2/
 
 
 Navigate to the Project Folder
